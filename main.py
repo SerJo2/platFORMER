@@ -2,12 +2,15 @@ import pygame
 import sys
 from pygame.locals import *
 
+
+clock = pygame.time.Clock()
 pygame.init()
 
 WINDOW_SIZE = (400, 400)
 
-screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
 
+screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
+pygame.display.set_caption('platFORMER')
 
 while True:
     
@@ -18,3 +21,4 @@ while True:
             sys.exit()
 
     pygame.display.update()
+    clock.tick(60)
