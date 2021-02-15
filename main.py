@@ -36,18 +36,50 @@ game_map = [['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0
 
 
 def collide_test(rect, tiles):
-    pass
+    hit_list = []
+    for tile in tiles:
+        if rect.colliderect(tile):
+            hit_list.append(tile)
+    return hit_list
+
+
+def move(rect, movement, tiles):
+    collide_type = {'top': False, 'bottom': False, 'right': False, 'left': False}
+    rect.x += movement[0]
+    hit_list = collide_test(rect, tiles)
+    for tile in hit_list:
+        if movement[0] > 0:
+            rect.right = tile.left
+            collide_type['right'] = True
+        if movement[0] < 0:
+            rect.left = tile.right
+            collide_type['left'] = True
+
+    rect.y += movement[1]
+    hit_list = collide_test(rect, tiles)
+    for tile in hit_list:
+        if movement[1] > 0:
+            rect.bottom = tile.top
+            collide_type['bottom'] = True
+        if movement[1] < 0:
+            rect.top = tile.bottom
+            collide_type['top'] = True
+
+    return rect, collide_type
+
 
 mov_right = False
 mov_left = False
+air_timer = 0
 cords = [50, 50]
 player_v_momentum = 0
+how_jmp = 2
 
 player_rect = pygame.Rect(cords[0], cords[1], player_image.get_width(), player_image.get_height())
+player_movement = [0, 0]
 
 while True:
     disp.fill((146, 244, 255))
-
 
     tile_rects = []
     y = 0
@@ -63,18 +95,28 @@ while True:
             x += 1
         y += 1
 
-    disp.blit(player_image, cords)
-    if mov_left:
-        cords[0] -= 4
+    player_movement = [0, 0]
     if mov_right:
-        cords[0] += 4
-
+        player_movement[0] += 2
+    if mov_left:
+        player_movement[0] -= 2
+    player_movement[1] += player_v_momentum
     player_v_momentum += 0.2
-    cords[1] += player_v_momentum
+    if player_v_momentum > 3:
+        player_v_momentum = 3
+    player_rect, collisions = move(player_rect, player_movement, tile_rects)
 
-    player_rect.x = cords[0]
-    player_rect.y = cords[1]
+    if collisions['bottom']:
+        player_v_momentum = 1
+        air_timer = 0
+        how_jmp = 2
+    else:
+        air_timer += 1
 
+    if collisions['top']:
+        player_v_momentum = 0
+
+    disp.blit(player_image, (player_rect.x, player_rect.y))
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
@@ -84,6 +126,13 @@ while True:
                 mov_right = True
             if event.key == K_LEFT:
                 mov_left = True
+            if event.key == K_UP:
+                if air_timer < 5 and how_jmp == 2:
+                    player_v_momentum = -3
+                    how_jmp -= 1
+                elif (how_jmp == 1 or how_jmp == 2) and air_timer >= 5:
+                    player_v_momentum = -3
+                    how_jmp = 0
         if event.type == KEYUP:
             if event.key == K_RIGHT:
                 mov_right = False
